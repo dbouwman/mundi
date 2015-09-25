@@ -126,7 +126,30 @@
 
   };
 
+  /**
+   * Given an array of dataset Ids, add the layers to the map
+   */
+  App.prototype.addDatasets = function(datasets){
+    var localself=this;
+    datasets.forEach(function(datasetId){
+      $.getJSON('http://opendata.arcgis.com/datasets/' + datasetId + '.json', function(res) {
+        //add the layer to the map
+        localself.addLayerToMap(res.data.url, res.data.id);
 
+        // var fields = res.data.fields;
+        // var name = res.data.name;
+
+        // var options = {};
+        // options.json = layer.renderer.toJson();
+        // options.name = layer.name;
+        // options.fields = fields;
+        // options.type = self.getType(layer);
+        // options.layerId = layer.id;
+        // self.initMalette(options);
+        //self._maletteTriggers(self.getType(layer));
+      });
+    })
+  };
 
 
   /*
@@ -231,8 +254,16 @@
         }
       }).then(function(response){
         self.map = response.map;
+        
+        //--------- Add datasets from the url
+        var qs = self.getQueryString();
+        if(qs.datasets){
+          self.addDatasets(qs.datasets.split(','));
+        }
+        //-----------------------------------
+
         self._updateExtent();
-          
+      
         self.map.graphicsLayerIds.forEach(function(layer) {
           var layer = self.map.getLayer(layer);
           layer.setMinScale(0);
@@ -455,9 +486,10 @@
   *
   */
   App.prototype.initLegend = function() {
+    var self = this;
     //initialize the legend module 
     this.legend = new Legend('legend-container', {
-      editable: false,
+      editable: true,
       layers: []
     });
 
@@ -1177,6 +1209,7 @@
 
     $('#map').on('drop', function(e) {
       var data = e.originalEvent.dataTransfer.getData("text");
+      console.log(data);
       var urls = data.split(',');
       var service = urls[0];
       var id = urls[1];
